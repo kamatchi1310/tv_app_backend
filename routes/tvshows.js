@@ -3,9 +3,36 @@ const multer = require("multer");
 const path = require("path");
 const router = express.Router();
 const db = require("../config/db");
+require("dotenv").config();
+
+const jwt = require("jsonwebtoken");
+const validateToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader) {
+    const token = authHeader.split(" ")[1]; // Bearer <token>
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          message: "Invalid token",
+        });
+      } else {
+        req.user = payload;
+        next();
+      }
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: "Token is not provided",
+    });
+  }
+};
 
 // Create API with file
-router.post("/", async (req, res) => {
+router.post("/", validateToken, async (req, res) => {
   try {
     const { title, type, director, budget, location, duration } = req.body;
 
@@ -28,7 +55,7 @@ router.post("/", async (req, res) => {
 });
 
 // GET all TV shows
-router.get("/", async (req, res) => {
+router.get("/", validateToken, async (req, res) => {
   try {
     const [rows] = await db.execute(
       "SELECT * FROM tv_shows ORDER BY created_at DESC"
@@ -41,7 +68,7 @@ router.get("/", async (req, res) => {
 });
 
 // Update a TV show by ID
-router.put("/:id", async (req, res) => {
+router.put("/:id", validateToken, async (req, res) => {
   const tvShowId = req.params.id;
   const { title, type, director, budget, location, duration } = req.body;
 
@@ -66,7 +93,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a TV show by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", validateToken, async (req, res) => {
   const tvShowId = req.params.id;
 
   try {
@@ -88,7 +115,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Get a TV show by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id", validateToken, async (req, res) => {
   const tvShowId = req.params.id;
 
   try {

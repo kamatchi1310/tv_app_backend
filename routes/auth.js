@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const db = require("../db");
+const { generateToken } = require("../jwtUtils.js");
 
 // Signup route
 router.post("/signup", async (req, res) => {
@@ -44,12 +45,13 @@ router.post("/login", (req, res) => {
 
       const user = results[0];
       const match = await bcrypt.compare(password, user.password);
-
+      const token = generateToken(user);
       if (!match) return res.status(401).json({ message: "Invalid password" });
 
       res.status(200).json({
         message: "Login successful",
         user: { id: user.id, name: user.name, email: user.email },
+        token: token,
       });
     }
   );

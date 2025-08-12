@@ -3,6 +3,8 @@ const cors = require("cors");
 const authRoutes = require("./routes/auth");
 const tvShowRoutes = require("./routes/tvshows");
 const dotenv = require("dotenv");
+const bodyParser = require("body-parser");
+
 dotenv.config();
 
 const app = express();
@@ -16,6 +18,7 @@ if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath);
 }
 
+app.use(bodyParser.json());
 app.use(cors()); // Allow frontend access
 app.use(express.json()); // Parse JSON bodies
 app.use("/api/auth", authRoutes); // ✅ Mount the route
